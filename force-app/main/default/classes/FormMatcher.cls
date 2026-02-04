@@ -2,9 +2,9 @@
 // original business requirements of tax id (preferred) and company name (fallback)
 public class FormMatcher implements IFormMatcher {
     // Three pieces of information: the form field, the object field and the value from the form
-    public SObject match(Map<String, FormIntaker.MatchingRule> matchingFields) {
+    public SObject match(Map<String, FormFieldMatchingRule> matchingFields) {
         if (matchingFields == null || matchingFields.isEmpty()) {
-            throw new FormIntaker.FormDataValidationException(FormIntaker.MISSING_MATCHING_FIELDS_ERROR);
+            throw new FormDataValidationException(FormIntaker.MISSING_MATCHING_FIELDS_ERROR);
         }
 
         String taxId = matchingFields.get('taxId').getFieldFormValueAsString();

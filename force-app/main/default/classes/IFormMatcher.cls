@@ -1,3 +1,3 @@
 public interface IFormMatcher {
-    SObject match(Map<String, FormIntaker.MatchingRule> matchingFields);
+    SObject match(Map<String, FormFieldMatchingRule> matchingFields);
 }

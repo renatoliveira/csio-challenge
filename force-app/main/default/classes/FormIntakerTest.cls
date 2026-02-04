@@ -10,8 +10,8 @@ private class FormIntakerTest {
         insert existingAccount;
     }
 
-    private static FormIntaker.DefaultForm createTestContextForm() {
-        FormIntaker.DefaultForm form = new FormIntaker.DefaultForm();
+    private static DefaultForm createTestContextForm() {
+        DefaultForm form = new DefaultForm();
         // form.companyName.name = 'company_name';
         form.companyName.setValue(ACCOUNT_NAME);
         // form.email.name = 'email';
@@ -41,12 +41,12 @@ private class FormIntakerTest {
 
     @IsTest
     static void testMatchByCompanyName() { // matches by company name
-        FormIntaker.DefaultForm form = createTestContextForm();
+        DefaultForm form = createTestContextForm();
         form.companyName.setValue(ACCOUNT_NAME);
 
         Test.startTest();
         System.runAs(new User(Id = UserInfo.getUserId())){
-            FormIntaker.processFormData(JSON.serialize(form), FormIntaker.DefaultForm.class);
+            FormIntaker.processFormData(JSON.serialize(form), DefaultForm.class);
         }
         Test.stopTest();
 
@@ -57,13 +57,13 @@ private class FormIntakerTest {
 
     @IsTest
     static void testMatchByTaxId() { // matches by tax id
-        FormIntaker.DefaultForm form = createTestContextForm();
+        DefaultForm form = createTestContextForm();
         form.federalTaxId.setValue(ACCOUNT_TAX_ID);
         form.companyName.setValue('Company That Does Not Exist, Co.');
 
         Test.startTest();
         System.runAs(new User(Id = UserInfo.getUserId())){
-            FormIntaker.processFormData(JSON.serialize(form), FormIntaker.DefaultForm.class);
+            FormIntaker.processFormData(JSON.serialize(form), DefaultForm.class);
         }
         Test.stopTest();
 
@@ -74,13 +74,13 @@ private class FormIntakerTest {
 
     @IsTest
     static void testAttemptToMatchToNonExistingAccount() { // no match found, creates lead
-        FormIntaker.DefaultForm form = createTestContextForm();
+        DefaultForm form = createTestContextForm();
         form.companyName.setValue('Non-existing Company');
         form.federalTaxId.setValue(null);
 
         Test.startTest();
         System.runAs(new User(Id = UserInfo.getUserId())){
-            FormIntaker.processFormData(JSON.serialize(form), FormIntaker.DefaultForm.class);
+            FormIntaker.processFormData(JSON.serialize(form), DefaultForm.class);
         }
         Test.stopTest();
 

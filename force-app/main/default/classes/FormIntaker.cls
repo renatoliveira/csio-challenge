@@ -16,13 +16,13 @@ public with sharing class FormIntaker {
         }
 
         if (formType == null) {
-            formType = FormIntaker.DefaultForm.class;
+            formType = DefaultForm.class;
         }
 
-        FormIntaker.IForm form;
+        IForm form;
 
         try {
-            form = (FormIntaker.IForm) JSON.deserialize(jsonData, formType);
+            form = (IForm) JSON.deserialize(jsonData, formType);
         } catch (Exception e) {
             System.debug(LoggingLevel.ERROR, INVALID_JSON_DATA_ERROR + ' ' + e.getStackTraceString());
             System.debug(jsonData);
@@ -36,140 +36,15 @@ public with sharing class FormIntaker {
         form.executeActions();
     }
 
-    private static SObject doMatching(FormIntaker.DefaultForm form) {
+    private static SObject doMatching(IForm form) {
         FormMatcher matcher = new FormMatcher();
 
-        SObject record = matcher.match(new Map<String, MatchingRule> {
-            'taxId' => new MatchingRule(new FormField('Federal Tax ID', 'federal_tax_id', false, FormFieldType.TEXT), Schema.Account.AccountNumber),
-            'companyName' => new MatchingRule(new FormField('Company Name', 'company_name', true, FormFieldType.TEXT), Schema.Account.Name)
+        SObject record = matcher.match(new Map<String, FormFieldMatchingRule> {
+            'taxId' => new FormFieldMatchingRule(new FormField('Federal Tax ID', 'federal_tax_id', false, FormFieldType.TEXT), Schema.Account.AccountNumber),
+            'companyName' => new FormFieldMatchingRule(new FormField('Company Name', 'company_name', true, FormFieldType.TEXT), Schema.Account.Name)
         });
 
         return record;
-    }
-
-    public interface IForm {
-        List<FormField> getFields();
-        Object getFieldValue(String fieldName);
-        SObject matchToExistingRecord();
-        void executeActions();
-    }
-
-    public interface IFormActionOnScenario {
-        void execute(FormIntaker.IForm form, Map<String, Object> params);
-    }
-
-    public class DefaultFormActionOnMatch implements IFormActionOnScenario {
-        public void execute(FormIntaker.IForm form, Map<String, Object> params) {
-            // create opportunity
-            if (!params.containsKey('accountId')) {
-                throw new FormDataValidationException('Account ID is required');
-            }
-
-            Opportunity opportunity = new Opportunity(
-                Name = (String) form.getFieldValue('company_name'),
-                AccountId = (Id) params.get('accountId'),
-                StageName = 'Prospecting',
-                CloseDate = Date.today().addMonths(1)
-            );
-
-            insert opportunity;
-        }
-    }
-
-    public class DefaultFormActionOnNoMatch implements IFormActionOnScenario {
-        public void execute(FormIntaker.IForm form, Map<String, Object> params) {
-            // create lead
-            System.debug(form);
-            System.debug(((FormIntaker.DefaultForm)form).email);
-            System.debug(params);
-            Lead lead = new Lead(
-                FirstName = (String) form.getFieldValue('contact_first_name'),
-                LastName = (String) form.getFieldValue('contact_last_name'),
-                Email = (String) form.getFieldValue('email'),
-                Phone = (String) form.getFieldValue('phone'),
-                Company = (String) form.getFieldValue('company_name')
-            );
-
-            insert lead;
-        }
-    }
-
-    public class DefaultForm implements IForm {
-        public transient IFormActionOnScenario actionOnMatch = new DefaultFormActionOnMatch();
-        public transient IFormActionOnScenario actionOnNoMatch = new DefaultFormActionOnNoMatch();
-        public transient IFormMatcher matcher = new FormMatcher();
-
-        public FormField companyName = new FormField('Company Name', 'company_name', true, FormFieldType.TEXT);
-        public FormField email = new FormField('Email', 'email', true, FormFieldType.TEXT);
-        public FormField phone = new FormField('Phone', 'phone', true, FormFieldType.TEXT);
-
-        // optional fields
-        public FormField federalTaxId = new FormField('Federal Tax ID', 'federal_tax_id', false, FormFieldType.TEXT);
-        public FormField annualRevenue = new FormField('Annual Revenue', 'annual_revenue', false, FormFieldType.MONEY);
-
-        // contact
-        public FormField contactFirstName = new FormField('Contact First Name', 'contact_first_name', true, FormFieldType.TEXT);
-        public FormField contactLastName = new FormField('Contact Last Name', 'contact_last_name', true, FormFieldType.TEXT);
-
-        // because the attributes are transient, we need to initialize them
-        private void usingDefaults() {
-            this.actionOnMatch = new DefaultFormActionOnMatch();
-            this.actionOnNoMatch = new DefaultFormActionOnNoMatch();
-            this.matcher = new FormMatcher();
-        }
-
-        private void validateRequiredFieldsAreSet() {
-            for (FormField field : this.getFields()) {
-                if (field.required && field.value == null) {
-                    throw new FormDataValidationException('Field ' + field.label + ' is required');
-                }
-            }
-        }
-
-        public List<FormField> getFields() {
-            return new List<FormField> {
-                companyName,
-                contactFirstName,
-                contactLastName,
-                email,
-                phone,
-                federalTaxId,
-                annualRevenue
-            };
-        }
-
-        public Object getFieldValue(String fieldName) {
-            List<FormIntaker.FormField> fields = this.getFields();
-
-            for (FormIntaker.FormField field : fields) {
-                if (field.name.equals(fieldName)) {
-                    return field.value;
-                }
-            }
-
-            throw new FormIntaker.FormDataValidationException('Field ' + fieldName + ' does not exist');
-        }
-
-        public SObject matchToExistingRecord() {
-            return this.matcher?.match(new Map<String, MatchingRule> {
-                'taxId' => new MatchingRule(this.federalTaxId, Schema.Account.AccountNumber),
-                'companyName' => new MatchingRule(this.companyName, Schema.Account.Name)
-            });
-        }
-
-        public void executeActions() {
-            this.usingDefaults();
-            this.validateRequiredFieldsAreSet();
-
-            // matching to existing record
-            SObject record = this.matchToExistingRecord();
-
-            if (record != null) {
-                this.actionOnMatch.execute(this, new Map<String, Object>{ 'accountId' => record.Id });
-            } else {
-                this.actionOnNoMatch.execute(this, new Map<String, Object>());
-            }
-        }
     }
 
     public enum FormFieldType {
@@ -233,28 +108,4 @@ public with sharing class FormIntaker {
             this.value = String.valueOf(value);
         }
     }
-
-    public class MatchingRule {
-        public FormField formField;
-        public Schema.SObjectField objectField;
-
-        public MatchingRule(FormField formField, Schema.SObjectField objectField) {
-            if (formField == null) {
-                throw new FormDataValidationException('Form field is required');
-            }
-
-            if (objectField == null) {
-                throw new FormDataValidationException('Object field is required');
-            }
-
-            this.formField = formField;
-            this.objectField = objectField;
-        }
-
-        public String getFieldFormValueAsString() {
-            return this.formField?.value == null ? null : String.valueOf(this.formField.value);
-        }
-    }
-
-    public class FormDataValidationException extends Exception {}
 }
