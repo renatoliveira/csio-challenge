@@ -5,6 +5,7 @@ public with sharing class FormIntaker {
 
     private static final String JSON_DATA_REQUIRED_ERROR = 'JSON data is required';
     private static final String INVALID_JSON_DATA_ERROR = 'Invalid JSON data';
+    private static final String FORM_TYPE_REQUIRED_ERROR = 'Form type is required';
 
     // these are public so they can be reused in tests and in future rule matching implementations
     public static final String NO_MATCHING_RECORD_FOUND_ERROR = 'No matching record found';
@@ -16,7 +17,7 @@ public with sharing class FormIntaker {
         }
 
         if (formType == null) {
-            formType = DefaultForm.class;
+            throw new FormDataValidationException(FORM_TYPE_REQUIRED_ERROR);
         }
 
         IForm form;
