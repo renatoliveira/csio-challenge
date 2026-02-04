@@ -2,11 +2,27 @@
 private class FormIntakerTest {
 
     private static String ACCOUNT_TAX_ID = '1234567890';
+    private static String ACCOUNT_NAME = 'Test Company';
 
     @TestSetup
     static void setup() {
-        Account existingAccount = new Account(Name = 'Test Company', AccountNumber = '1234567890');
+        Account existingAccount = new Account(Name = ACCOUNT_NAME, AccountNumber = ACCOUNT_TAX_ID);
         insert existingAccount;
+    }
+
+    private static FormIntaker.DefaultForm createTestContextForm() {
+        FormIntaker.DefaultForm form = new FormIntaker.DefaultForm();
+        // form.companyName.name = 'company_name';
+        form.companyName.setValue(ACCOUNT_NAME);
+        // form.email.name = 'email';
+        form.email.setValue('test@test.com');
+        // form.phone.name = 'phone';
+        form.phone.setValue('+1 555-555-5555');
+        // form.contactFirstName.name = 'contact_first_name';
+        form.contactFirstName.setValue('John');
+        // form.contactLastName.name = 'contact_last_name';
+        form.contactLastName.setValue('Doe');
+        return form;
     }
 
     /**
@@ -23,27 +39,13 @@ private class FormIntakerTest {
         - Each created record must indicate where it came from (Community, Webhook)
      */
 
-     @IsTest
-     static void testAttemptToMatchExistingAccount() {
-        FormIntaker.DefaultForm form = new FormIntaker.DefaultForm();
-        form.companyName.name = 'company_name';
-        form.companyName.setValue('Test Company');
-        form.email.name = 'email';
-        form.email.setValue('test@test.com');
-        form.phone.name = 'phone';
-        form.phone.setValue(ACCOUNT_TAX_ID);
-        form.contactFirstName.name = 'contact_first_name';
-        form.contactFirstName.setValue('Test');
-        form.contactLastName.name = 'contact_last_name';
-        form.contactLastName.setValue('Test');
-        form.federalTaxId.name = 'federal_tax_id';
-        form.federalTaxId.setValue(ACCOUNT_TAX_ID);
-        form.annualRevenue.name = 'annual_revenue';
-        form.annualRevenue.setValue(100000);
+    @IsTest
+    static void testMatchByCompanyName() { // matches by company name
+        FormIntaker.DefaultForm form = createTestContextForm();
+        form.companyName.setValue(ACCOUNT_NAME);
 
         Test.startTest();
         System.runAs(new User(Id = UserInfo.getUserId())){
-            System.debug(JSON.serialize(form));
             FormIntaker.processFormData(JSON.serialize(form), FormIntaker.DefaultForm.class);
         }
         Test.stopTest();
@@ -51,5 +53,39 @@ private class FormIntakerTest {
         // Match found (Account with same Tax ID): Opportunity created, no Lead
         System.assertEquals(1, [SELECT COUNT() FROM Opportunity], 'Expected one Opportunity when account matches');
         System.assertEquals(0, [SELECT COUNT() FROM Lead], 'Expected no Lead when account matches');
+    }
+
+    @IsTest
+    static void testMatchByTaxId() { // matches by tax id
+        FormIntaker.DefaultForm form = createTestContextForm();
+        form.federalTaxId.setValue(ACCOUNT_TAX_ID);
+        form.companyName.setValue('Company That Does Not Exist, Co.');
+
+        Test.startTest();
+        System.runAs(new User(Id = UserInfo.getUserId())){
+            FormIntaker.processFormData(JSON.serialize(form), FormIntaker.DefaultForm.class);
+        }
+        Test.stopTest();
+
+        // Match found (Account with same Tax ID): Opportunity created, no Lead
+        System.assertEquals(1, [SELECT COUNT() FROM Opportunity], 'Expected one Opportunity when account matches');
+        System.assertEquals(0, [SELECT COUNT() FROM Lead], 'Expected no Lead when account matches');
+    }
+
+    @IsTest
+    static void testAttemptToMatchToNonExistingAccount() { // no match found, creates lead
+        FormIntaker.DefaultForm form = createTestContextForm();
+        form.companyName.setValue('Non-existing Company');
+        form.federalTaxId.setValue(null);
+
+        Test.startTest();
+        System.runAs(new User(Id = UserInfo.getUserId())){
+            FormIntaker.processFormData(JSON.serialize(form), FormIntaker.DefaultForm.class);
+        }
+        Test.stopTest();
+
+        // No match found, Lead created
+        System.assertEquals(0, [SELECT COUNT() FROM Opportunity], 'Expected no Opportunity when no account matches');
+        System.assertEquals(1, [SELECT COUNT() FROM Lead], 'Expected one Lead when no account matches');
     }
 }

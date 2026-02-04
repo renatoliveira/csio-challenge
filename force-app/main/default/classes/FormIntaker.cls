@@ -118,6 +118,14 @@ public with sharing class FormIntaker {
             this.matcher = new FormMatcher();
         }
 
+        private void validateRequiredFieldsAreSet() {
+            for (FormField field : this.getFields()) {
+                if (field.required && field.value == null) {
+                    throw new FormDataValidationException('Field ' + field.label + ' is required');
+                }
+            }
+        }
+
         public List<FormField> getFields() {
             return new List<FormField> {
                 companyName,
@@ -151,6 +159,7 @@ public with sharing class FormIntaker {
 
         public void executeActions() {
             this.usingDefaults();
+            this.validateRequiredFieldsAreSet();
 
             // matching to existing record
             SObject record = this.matchToExistingRecord();
