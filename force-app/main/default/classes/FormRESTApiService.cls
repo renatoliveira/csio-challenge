@@ -1,5 +1,6 @@
 /**
  * Apex REST service to handle the submission of the form from the external system
+ * Callable from the URL at /services/apexrest/v1/form/submit
  */
 @RestResource(urlMapping='/v1/form/submit')
 global with sharing class FormRESTApiService {
@@ -33,5 +34,15 @@ global with sharing class FormRESTApiService {
         RestContext.response.responseBody = Blob.valueOf(JSON.serialize(new Map<String, Object>{
             'message' => STATUS_200_FORM_SUBMITTED_SUCCESSFULLY_MESSAGE
         }));
+    }
+
+    /**
+     * Returns the empty form JSON template (ie: the form with no values)
+     */
+    @HttpGet
+    global static void getFormTemplate() {
+        DefaultForm form = new DefaultForm();
+        RestContext.response.statusCode = 200;
+        RestContext.response.responseBody = Blob.valueOf(JSON.serializePretty(form));
     }
 }
