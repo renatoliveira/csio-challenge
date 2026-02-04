@@ -47,7 +47,8 @@ private class FormIntakerTest {
         }
         Test.stopTest();
 
-        System.assertEquals(1, [SELECT COUNT() FROM Opportunity]);
-        System.assertEquals(1, [SELECT COUNT() FROM Lead]);
+        // Match found (Account with same Tax ID): Opportunity created, no Lead
+        System.assertEquals(1, [SELECT COUNT() FROM Opportunity], 'Expected one Opportunity when account matches');
+        System.assertEquals(0, [SELECT COUNT() FROM Lead], 'Expected no Lead when account matches');
     }
 }

@@ -44,9 +44,28 @@ public with sharing class FormIntaker {
         DefaultForm form = new DefaultForm();
 
         for (FormField field : form.getFields()) {
-            if (dataMap.containsKey(field.name)) {
-                FormIntaker.FormField fv = (FormIntaker.FormField) dataMap.get(field.name);
-                field.value = fv.value;
+            Object raw = dataMap.get(field.name);
+            if (raw == null) {
+                for (String key : dataMap.keySet()) {
+                    Object v = dataMap.get(key);
+                    if (v instanceof Map<String, Object>) {
+                        Map<String, Object> m = (Map<String, Object>) v;
+                        if (field.name.equals(m.get('name'))) {
+                            raw = v;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (raw != null) {
+                if (raw instanceof Map<String, Object>) {
+                    Map<String, Object> fieldMap = (Map<String, Object>) raw;
+                    if (fieldMap.containsKey('value')) {
+                        field.value = fieldMap.get('value');
+                    }
+                } else if (raw instanceof FormIntaker.FormField) {
+                    field.value = ((FormIntaker.FormField) raw).value;
+                }
             }
         }
 
@@ -82,11 +101,11 @@ public with sharing class FormIntaker {
                 throw new FormDataValidationException('Account ID is required');
             }
 
-            Account account = (Account) params.get('accountId');
             Opportunity opportunity = new Opportunity(
-                Name = (String) form.getFieldValue('companyName'),
+                Name = (String) form.getFieldValue('company_name'),
                 AccountId = (Id) params.get('accountId'),
-                StageName = 'Prospecting'
+                StageName = 'Prospecting',
+                CloseDate = Date.today().addMonths(1)
             );
 
             insert opportunity;
@@ -164,7 +183,7 @@ public with sharing class FormIntaker {
             SObject record = this.matchToExistingRecord();
 
             if (record != null) {
-                this.actionOnMatch.execute(this, new Map<String, Object>{ 'record' => record });
+                this.actionOnMatch.execute(this, new Map<String, Object>{ 'accountId' => record.Id });
             } else {
                 this.actionOnNoMatch.execute(this, new Map<String, Object>());
             }

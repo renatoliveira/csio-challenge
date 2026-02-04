@@ -12,7 +12,7 @@ public class FormMatcher implements IFormMatcher {
 
         // Single query, do not spend time on multiple queries
         List<Account> records = [
-            SELECT Id
+            SELECT Id, AccountNumber, Name
             FROM Account
             WHERE Name = :companyName
             OR AccountNumber = :taxId
