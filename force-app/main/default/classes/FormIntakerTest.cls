@@ -1,19 +1,16 @@
 @IsTest
 private class FormIntakerTest {
 
-    private static String ACCOUNT_TAX_ID = '1234567890';
-    private static String ACCOUNT_NAME = 'Test Company';
-
     @TestSetup
     static void setup() {
-        Account existingAccount = new Account(Name = ACCOUNT_NAME, AccountNumber = ACCOUNT_TAX_ID);
+        Account existingAccount = new Account(Name = FormTestingResources.ACCOUNT_NAME, AccountNumber = FormTestingResources.ACCOUNT_TAX_ID);
         insert existingAccount;
     }
 
     private static DefaultForm createTestContextForm() {
         DefaultForm form = new DefaultForm();
         // form.companyName.name = 'company_name';
-        form.companyName.setValue(ACCOUNT_NAME);
+        form.companyName.setValue(FormTestingResources.ACCOUNT_NAME);
         // form.email.name = 'email';
         form.email.setValue('test@test.com');
         // form.phone.name = 'phone';
@@ -42,7 +39,7 @@ private class FormIntakerTest {
     @IsTest
     static void testMatchByCompanyName() { // matches by company name
         DefaultForm form = createTestContextForm();
-        form.companyName.setValue(ACCOUNT_NAME);
+        form.companyName.setValue(FormTestingResources.ACCOUNT_NAME);
 
         Test.startTest();
         System.runAs(new User(Id = UserInfo.getUserId())){
@@ -58,7 +55,7 @@ private class FormIntakerTest {
     @IsTest
     static void testMatchByTaxId() { // matches by tax id
         DefaultForm form = createTestContextForm();
-        form.federalTaxId.setValue(ACCOUNT_TAX_ID);
+        form.federalTaxId.setValue(FormTestingResources.ACCOUNT_TAX_ID);
         form.companyName.setValue('Company That Does Not Exist, Co.');
 
         Test.startTest();
