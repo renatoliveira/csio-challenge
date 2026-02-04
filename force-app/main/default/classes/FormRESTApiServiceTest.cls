@@ -8,6 +8,28 @@ private class FormRESTApiServiceTest {
     }
 
     @IsTest
+    static void testGetFormTemplate() {
+        // create a test request
+        RestRequest request = new RestRequest();
+        request.requestUri = 'https://www.example.com/services/apexrest/v1/form/template';
+        request.httpMethod = 'GET';
+
+        // submit the form
+        Test.startTest();
+        RestContext.request = request;
+        RestContext.response = new RestResponse();
+        System.runAs(new User(Id = UserInfo.getUserId())){
+            FormRESTApiService.getFormTemplate();
+        }
+        RestResponse response = RestContext.response;
+        Test.stopTest();
+
+        // assert the response
+        Assert.areEqual(200, response.statusCode, 'Expected status code to be 200');
+        Assert.areEqual(JSON.serializePretty(new DefaultForm()), response.responseBody.toString(), 'Expected response body to be the empty form JSON template');
+    }
+
+    @IsTest
     static void testSubmitFormWithCompanyNameMatch() {
         DefaultForm form = FormTestingResources.createTestContextForm();
         form.federalTaxId.setValue(null);
