@@ -10,66 +10,30 @@ public with sharing class FormIntaker {
     public static final String NO_MATCHING_RECORD_FOUND_ERROR = 'No matching record found';
     public static final String MISSING_MATCHING_FIELDS_ERROR = 'Matching fields are required';
 
-    public static void processFormData(String jsonData, DefaultForm formTemplate) {
+    public static void processFormData(String jsonData, Type formType) {
         if (String.isBlank(jsonData)) {
             throw new FormDataValidationException(JSON_DATA_REQUIRED_ERROR);
         }
 
-        if (formTemplate == null) {
-            throw new FormDataValidationException('Form is required');
+        if (formType == null) {
+            formType = FormIntaker.DefaultForm.class;
         }
 
-        Map<String, Object> dataMap;
+        FormIntaker.IForm form;
 
         try {
-            dataMap = (Map<String, Object>) JSON.deserializeUntyped(jsonData);
-            System.debug(dataMap);
-        }
-        catch (Exception e) {
+            form = (FormIntaker.IForm) JSON.deserialize(jsonData, formType);
+        } catch (Exception e) {
             System.debug(LoggingLevel.ERROR, INVALID_JSON_DATA_ERROR + ' ' + e.getStackTraceString());
+            System.debug(jsonData);
+            System.debug(e.getMessage());
+            System.debug(e.getStackTraceString());
             throw new FormDataValidationException(INVALID_JSON_DATA_ERROR);
         }
-
-        // build form from data provided by the caller
-        FormIntaker.IForm form = mapFormFields(dataMap);
-        System.debug((FormIntaker.DefaultForm)form);
-        System.debug(((FormIntaker.DefaultForm)form).email);
 
         // attempt to match existing account
         // and execute actions based on the result
         form.executeActions();
-    }
-
-    private static DefaultForm mapFormFields(Map<String, Object> dataMap) {
-        DefaultForm form = new DefaultForm();
-
-        for (FormField field : form.getFields()) {
-            Object raw = dataMap.get(field.name);
-            if (raw == null) {
-                for (String key : dataMap.keySet()) {
-                    Object v = dataMap.get(key);
-                    if (v instanceof Map<String, Object>) {
-                        Map<String, Object> m = (Map<String, Object>) v;
-                        if (field.name.equals(m.get('name'))) {
-                            raw = v;
-                            break;
-                        }
-                    }
-                }
-            }
-            if (raw != null) {
-                if (raw instanceof Map<String, Object>) {
-                    Map<String, Object> fieldMap = (Map<String, Object>) raw;
-                    if (fieldMap.containsKey('value')) {
-                        field.value = fieldMap.get('value');
-                    }
-                } else if (raw instanceof FormIntaker.FormField) {
-                    field.value = ((FormIntaker.FormField) raw).value;
-                }
-            }
-        }
-
-        return form;
     }
 
     private static SObject doMatching(FormIntaker.DefaultForm form) {
@@ -131,9 +95,9 @@ public with sharing class FormIntaker {
     }
 
     public class DefaultForm implements IForm {
-        public IFormActionOnScenario actionOnMatch = new DefaultFormActionOnMatch();
-        public IFormActionOnScenario actionOnNoMatch = new DefaultFormActionOnNoMatch();
-        public IFormMatcher matcher = new FormMatcher();
+        public transient IFormActionOnScenario actionOnMatch = new DefaultFormActionOnMatch();
+        public transient IFormActionOnScenario actionOnNoMatch = new DefaultFormActionOnNoMatch();
+        public transient IFormMatcher matcher = new FormMatcher();
 
         public FormField companyName = new FormField('Company Name', 'company_name', true, FormFieldType.TEXT);
         public FormField email = new FormField('Email', 'email', true, FormFieldType.TEXT);
@@ -146,6 +110,13 @@ public with sharing class FormIntaker {
         // contact
         public FormField contactFirstName = new FormField('Contact First Name', 'contact_first_name', true, FormFieldType.TEXT);
         public FormField contactLastName = new FormField('Contact Last Name', 'contact_last_name', true, FormFieldType.TEXT);
+
+        // because the attributes are transient, we need to initialize them
+        private void usingDefaults() {
+            this.actionOnMatch = new DefaultFormActionOnMatch();
+            this.actionOnNoMatch = new DefaultFormActionOnNoMatch();
+            this.matcher = new FormMatcher();
+        }
 
         public List<FormField> getFields() {
             return new List<FormField> {
@@ -172,13 +143,15 @@ public with sharing class FormIntaker {
         }
 
         public SObject matchToExistingRecord() {
-            return this.matcher.match(new Map<String, MatchingRule> {
+            return this.matcher?.match(new Map<String, MatchingRule> {
                 'taxId' => new MatchingRule(this.federalTaxId, Schema.Account.AccountNumber),
                 'companyName' => new MatchingRule(this.companyName, Schema.Account.Name)
             });
         }
 
         public void executeActions() {
+            this.usingDefaults();
+
             // matching to existing record
             SObject record = this.matchToExistingRecord();
 
@@ -200,7 +173,7 @@ public with sharing class FormIntaker {
         public String name { get; set; }
         public Boolean required { get; set; }
         public FormFieldType type { get; set; }
-        public Object value { get; set; }
+        public String value { get; set; }
 
         public FormField(String label, String name, Boolean required, FormFieldType type) {
             if (String.isBlank(label)) {
@@ -223,6 +196,32 @@ public with sharing class FormIntaker {
             this.name = name == null ? label.toLowerCase().replace(' ', '_') : name;
             this.required = required;
             this.type = type;
+            this.value = null;
+        }
+
+        public Object getValue() {
+            if (this.value == null) {
+                return null;
+            }
+
+            if (this.type == FormFieldType.TEXT) {
+                return this.value;
+            }
+
+            return Decimal.valueOf(this.value);
+        }
+
+        public void setValue(Object value) {
+            if (value == null) {
+                this.value = null;
+                return;
+            }
+
+            if (this.type == FormFieldType.TEXT) {
+                this.value = String.valueOf(value);
+            }
+
+            this.value = String.valueOf(value);
         }
     }
 

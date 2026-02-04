@@ -27,23 +27,24 @@ private class FormIntakerTest {
      static void testAttemptToMatchExistingAccount() {
         FormIntaker.DefaultForm form = new FormIntaker.DefaultForm();
         form.companyName.name = 'company_name';
-        form.companyName.value = 'Test Company';
+        form.companyName.setValue('Test Company');
         form.email.name = 'email';
-        form.email.value = 'test@test.com';
+        form.email.setValue('test@test.com');
         form.phone.name = 'phone';
-        form.phone.value = ACCOUNT_TAX_ID;
+        form.phone.setValue(ACCOUNT_TAX_ID);
         form.contactFirstName.name = 'contact_first_name';
-        form.contactFirstName.value = 'Test';
+        form.contactFirstName.setValue('Test');
         form.contactLastName.name = 'contact_last_name';
-        form.contactLastName.value = 'Test';
+        form.contactLastName.setValue('Test');
         form.federalTaxId.name = 'federal_tax_id';
-        form.federalTaxId.value = ACCOUNT_TAX_ID;
+        form.federalTaxId.setValue(ACCOUNT_TAX_ID);
         form.annualRevenue.name = 'annual_revenue';
-        form.annualRevenue.value = 100000;
+        form.annualRevenue.setValue(100000);
 
         Test.startTest();
         System.runAs(new User(Id = UserInfo.getUserId())){
-            FormIntaker.processFormData(JSON.serialize(form), new FormIntaker.DefaultForm());
+            System.debug(JSON.serialize(form));
+            FormIntaker.processFormData(JSON.serialize(form), FormIntaker.DefaultForm.class);
         }
         Test.stopTest();
 
