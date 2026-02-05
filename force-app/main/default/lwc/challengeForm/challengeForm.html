@@ -1,0 +1,44 @@
+<template>
+    <div class="slds-box slds-theme_shade slds-m-bottom_medium">
+        <template lwc:if={message}>
+            <div class="slds-m-bottom_small {messageThemeClass}">
+                <div class="slds-notify slds-notify_alert" role="alert">
+                    <span class="slds-assistive-text">info</span>
+                    <span>{message}</span>
+                </div>
+            </div>
+        </template>
+
+        <template lwc:if={isLoading}>
+            <div class="slds-align_absolute-center slds-p-around_medium">
+                <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <template lwc:elseif={hasFormFields}>
+            <form>
+                <template for:each={formFields} for:item="field">
+                    <div key={field.key} class="slds-form-element slds-m-bottom_small">
+                        <lightning-input
+                            data-name={field.name}
+                            name={field.name}
+                            label={field.label}
+                            type={field.inputType}
+                            required={field.required}
+                            step={field.step}
+                            data-field-key={field.key}
+                        ></lightning-input>
+                    </div>
+                </template>
+                <div class="slds-m-top_medium">
+                    <lightning-button
+                        variant="brand"
+                        label="Submit application"
+                        title="Submit application"
+                        onclick={handleSubmit}
+                    ></lightning-button>
+                </div>
+            </form>
+        </template>
+    </div>
+</template>
