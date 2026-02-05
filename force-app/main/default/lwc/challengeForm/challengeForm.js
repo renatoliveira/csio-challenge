@@ -99,6 +99,11 @@ export default class ChallengeForm extends LightningElement {
             .then((result) => {
                 this.message = result.message || (result.success ? 'Form submitted successfully' : 'Form submitted failed');
                 this.isError = !result.success;
+                if (result.success) {
+                    this.template.querySelectorAll('lightning-input').forEach((input) => {
+                        input.value = '';
+                    });
+                }
             })
             .catch(() => {
                 this.message = 'Failed to submit form.';
