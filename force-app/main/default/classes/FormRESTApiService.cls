@@ -11,6 +11,8 @@ global with sharing class FormRESTApiService {
 
     @HttpPost
     global static void submitForm() {
+        FormIntaker.context = 'api'; // api = external system via a webhook
+
         // get the request body
         String requestBody = RestContext.request.requestBody.toString();
 

@@ -59,6 +59,7 @@ private class FormRESTApiServiceTest {
         // assert the opportunity was created
         Assert.areEqual(1, [SELECT COUNT() FROM Opportunity], 'Expected one Opportunity when account matches');
         Assert.areEqual(0, [SELECT COUNT() FROM Lead], 'Expected no Lead when account matches');
+        Assert.areEqual('api', [SELECT LeadSource FROM Opportunity].LeadSource, 'Expected LeadSource to be "api"');
     }
 
     @IsTest
@@ -91,6 +92,7 @@ private class FormRESTApiServiceTest {
         // assert the opportunity was created
         Assert.areEqual(1, [SELECT COUNT() FROM Opportunity], 'Expected one Opportunity when account matches');
         Assert.areEqual(0, [SELECT COUNT() FROM Lead], 'Expected no Lead when account matches');
+        Assert.areEqual('api', [SELECT LeadSource FROM Opportunity].LeadSource, 'Expected LeadSource to be "api"');
     }
 
     @IsTest
@@ -123,6 +125,7 @@ private class FormRESTApiServiceTest {
         // assert the lead was created
         Assert.areEqual(0, [SELECT COUNT() FROM Opportunity], 'Expected no Opportunity when no account matches');
         Assert.areEqual(1, [SELECT COUNT() FROM Lead], 'Expected one Lead when no account matches');
+        Assert.areEqual('api', [SELECT LeadSource FROM Lead].LeadSource, 'Expected LeadSource to be "api"');
     }
 
     @IsTest

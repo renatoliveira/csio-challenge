@@ -48,8 +48,9 @@ private class FormIntakerTest {
         Test.stopTest();
 
         // Match found (Account with same Tax ID): Opportunity created, no Lead
-        System.assertEquals(1, [SELECT COUNT() FROM Opportunity], 'Expected one Opportunity when account matches');
-        System.assertEquals(0, [SELECT COUNT() FROM Lead], 'Expected no Lead when account matches');
+        Assert.areEqual(1, [SELECT COUNT() FROM Opportunity], 'Expected one Opportunity when account matches');
+        Assert.areEqual(0, [SELECT COUNT() FROM Lead], 'Expected no Lead when account matches');
+        Assert.areEqual('Other', [SELECT LeadSource FROM Opportunity].LeadSource, 'Expected LeadSource to be "Other"');
     }
 
     @IsTest
@@ -65,8 +66,9 @@ private class FormIntakerTest {
         Test.stopTest();
 
         // Match found (Account with same Tax ID): Opportunity created, no Lead
-        System.assertEquals(1, [SELECT COUNT() FROM Opportunity], 'Expected one Opportunity when account matches');
-        System.assertEquals(0, [SELECT COUNT() FROM Lead], 'Expected no Lead when account matches');
+        Assert.areEqual(1, [SELECT COUNT() FROM Opportunity], 'Expected one Opportunity when account matches');
+        Assert.areEqual(0, [SELECT COUNT() FROM Lead], 'Expected no Lead when account matches');
+        Assert.areEqual('Other', [SELECT LeadSource FROM Opportunity].LeadSource, 'Expected LeadSource to be "Other"');
     }
 
     @IsTest
@@ -82,8 +84,9 @@ private class FormIntakerTest {
         Test.stopTest();
 
         // No match found, Lead created
-        System.assertEquals(0, [SELECT COUNT() FROM Opportunity], 'Expected no Opportunity when no account matches');
-        System.assertEquals(1, [SELECT COUNT() FROM Lead], 'Expected one Lead when no account matches');
+        Assert.areEqual(0, [SELECT COUNT() FROM Opportunity], 'Expected no Opportunity when no account matches');
+        Assert.areEqual(1, [SELECT COUNT() FROM Lead], 'Expected one Lead when no account matches');
+        Assert.areEqual('Other', [SELECT LeadSource FROM Lead].LeadSource, 'Expected LeadSource to be "Other"');
     }
 
     @IsTest
@@ -103,5 +106,7 @@ private class FormIntakerTest {
 
         Assert.isNotNull(exceptionThrown, 'Expected FormDataValidationException to be thrown');
         Assert.areEqual(FormIntaker.FORM_TYPE_REQUIRED_ERROR, exceptionThrown.getMessage(), 'Expected FormDataValidationException to be thrown with the correct message');
+        Assert.areEqual(0, [SELECT COUNT() FROM Opportunity], 'Expected no Opportunity when no form type is provided');
+        Assert.areEqual(0, [SELECT COUNT() FROM Lead], 'Expected no Lead when no form type is provided');
     }
 }

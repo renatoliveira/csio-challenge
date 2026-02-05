@@ -13,6 +13,7 @@ public with sharing class ChallengeFormController {
     @AuraEnabled
     public static Map<String, Object> submitForm(String requestBody) {
         try {
+            FormIntaker.context = 'web';
             FormIntaker.processFormData(requestBody, DefaultForm.class);
             return new Map<String, Object>{
                 'success' => true,

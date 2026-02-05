@@ -32,6 +32,7 @@ private class ChallengeFormControllerTest {
         Assert.isTrue((Boolean) result.get('success'), 'Expected success to be true');
         Assert.areEqual(FormRESTApiService.STATUS_200_FORM_SUBMITTED_SUCCESSFULLY_MESSAGE, result.get('message'), 'Expected success message');
         Assert.areEqual(1, [SELECT COUNT() FROM Lead], 'Expected one Lead when no account matches');
+        Assert.areEqual('web', [SELECT LeadSource FROM Lead].LeadSource, 'Expected LeadSource to be "web"');
     }
 
     @IsTest
@@ -45,5 +46,6 @@ private class ChallengeFormControllerTest {
         Assert.isFalse((Boolean) result.get('success'), 'Expected success to be false');
         Assert.areEqual(FormRESTApiService.STATUS_400_FORM_SUBMITTED_FAILED_MESSAGE, result.get('message'), 'Expected failure message');
         Assert.areEqual(0, [SELECT COUNT() FROM Lead], 'Expected no Lead when invalid form is submitted');
+        Assert.areEqual(0, [SELECT COUNT() FROM Opportunity], 'Expected no Opportunity when invalid form is submitted');
     }
 }

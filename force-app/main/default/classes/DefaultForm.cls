@@ -87,7 +87,8 @@ public class DefaultForm implements IForm {
                 Name = (String) form.getFieldValue('company_name'),
                 AccountId = (Id) params.get('accountId'),
                 StageName = 'Prospecting',
-                CloseDate = Date.today().addMonths(1)
+                CloseDate = Date.today().addMonths(1),
+                LeadSource = FormIntaker.context
             );
 
             insert opportunity;
@@ -102,7 +103,8 @@ public class DefaultForm implements IForm {
                 LastName = (String) form.getFieldValue('contact_last_name'),
                 Email = (String) form.getFieldValue('email'),
                 Phone = (String) form.getFieldValue('phone'),
-                Company = (String) form.getFieldValue('company_name')
+                Company = (String) form.getFieldValue('company_name'),
+                LeadSource = FormIntaker.context
             );
 
             insert lead;

@@ -12,6 +12,9 @@ public with sharing class FormIntaker {
     public static final String NO_MATCHING_RECORD_FOUND_ERROR = 'No matching record found';
     public static final String MISSING_MATCHING_FIELDS_ERROR = 'Matching fields are required';
 
+    // context
+    public static String context = 'Other'; // default value on the Lead and Opportunity fields
+
     public static void processFormData(String jsonData, Type formType) {
         if (String.isBlank(jsonData)) {
             throw new FormDataValidationException(JSON_DATA_REQUIRED_ERROR);
