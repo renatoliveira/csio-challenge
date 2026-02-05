@@ -48,7 +48,11 @@ public class DefaultForm implements IForm {
 
         for (FormIntaker.FormField field : fields) {
             if (field.name.equals(fieldName)) {
-                return field.value;
+                if (field.type == FormIntaker.FormFieldType.MONEY) {
+                    return Decimal.valueOf(field.value);
+                } else {
+                    return field.value;
+                }
             }
         }
 
@@ -104,6 +108,7 @@ public class DefaultForm implements IForm {
                 Email = (String) form.getFieldValue('email'),
                 Phone = (String) form.getFieldValue('phone'),
                 Company = (String) form.getFieldValue('company_name'),
+                AnnualRevenue = (Decimal) form.getFieldValue('annual_revenue'),
                 LeadSource = FormIntaker.context
             );
 

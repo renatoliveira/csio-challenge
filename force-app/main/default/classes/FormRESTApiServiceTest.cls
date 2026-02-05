@@ -100,6 +100,7 @@ private class FormRESTApiServiceTest {
         DefaultForm form = FormTestingResources.createTestContextForm();
         form.federalTaxId.setValue(null);
         form.companyName.setValue('Company That Does Not Exist, Co.');
+        form.annualRevenue.setValue(100000);
         String requestBody = JSON.serialize(form);
 
         // create a test request
@@ -123,9 +124,15 @@ private class FormRESTApiServiceTest {
         Assert.areEqual(JSON.serialize(new Map<String, Object>{'message' => 'Form submitted successfully'}), response.responseBody.toString(), 'Expected response body to be "Form submitted successfully"');
 
         // assert the lead was created
+        List<Lead> leads = [SELECT AnnualRevenue, LeadSource FROM Lead];
+
         Assert.areEqual(0, [SELECT COUNT() FROM Opportunity], 'Expected no Opportunity when no account matches');
-        Assert.areEqual(1, [SELECT COUNT() FROM Lead], 'Expected one Lead when no account matches');
-        Assert.areEqual('api', [SELECT LeadSource FROM Lead].LeadSource, 'Expected LeadSource to be "api"');
+        Assert.areEqual(1, leads.size(), 'Expected one Lead when no account matches');
+        Assert.areEqual('api', leads[0].LeadSource, 'Expected LeadSource to be "api"');
+
+        // Assert that AnnualRevenue is not null and is a valid currency value
+        Assert.isNotNull(leads[0].AnnualRevenue, 'Expected AnnualRevenue to be not null');
+        Assert.isTrue(leads[0].AnnualRevenue > 0, 'Expected AnnualRevenue to be a valid currency value');
     }
 
     @IsTest
